@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABU BOT — Admin</title>
+<style>
+:root{--bg:#07080e;--card:#111421;--line:#24283b;--gold:#e9c46a;--txt:#eef0f6;--muted:#8a91a8;--bad:#ff6b6b;--ok:#6bd99a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);background:#0c0e18;position:sticky;top:0}
+h1{font-size:16px;margin:0;color:var(--gold);letter-spacing:.08em}
+nav{display:flex;gap:6px;flex-wrap:wrap;padding:12px 20px}
+nav button{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer}
+nav button.on{color:#1a1204;background:linear-gradient(135deg,var(--gold),#b8860b);border-color:transparent}
+main{padding:0 20px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+input,select{background:#0b0d16;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+button.act{background:#1d2238;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+button.act:hover{border-color:var(--gold)}button.danger{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.muted{color:var(--muted)}.tag{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+#msg{position:fixed;bottom:16px;right:16px;background:#1b1f32;border:1px solid var(--gold);padding:10px 14px;border-radius:10px;display:none}
+.login{max-width:380px;margin:12vh auto;text-align:center}
+.login input{width:100%;margin:12px 0}
+.login button{width:100%;padding:10px;border-radius:10px;border:0;background:linear-gradient(135deg,var(--gold),#b8860b);font-weight:600;cursor:pointer}
+@media (max-width:700px){th:nth-child(n+5),td:nth-child(n+5){display:none}}
+</style></head>
+<body>
+<div id="login" class="login card" style="display:none">
+  <h1>ABU BOT — ADMIN</h1>
+  <p class="muted">Admin kalitini kiriting (ADMIN_PANEL_TOKEN)</p>
+  <input id="tok" type="password" placeholder="Admin kaliti" autocomplete="off">
+  <button onclick="login()">Kirish</button>
+</div>
+<div id="app" style="display:none">
+<header><h1>ABU BOT — ADMIN</h1><button class="act" onclick="logout()">Chiqish</button></header>
+<nav id="nav">
+  <button data-tab="users" class="on">Foydalanuvchilar</button>
+  <button data-tab="shop">Do‘kon</button>
+  <button data-tab="promos">Promo-kodlar</button>
+  <button data-tab="tasks">Vazifalar</button>
+  <button data-tab="emoji">Emoji</button>
+  <button data-tab="audit">Audit</button>
+</nav>
+<main id="view"></main>
+</div>
+<div id="msg"></div>
+<script>
+const $=(s)=>document.querySelector(s);
+const esc=(s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let TOKEN=sessionStorage.getItem("abu_admin")||"";
+function toast(t,ok=true){const m=$("#msg");m.textContent=t;m.style.borderColor=ok?"var(--gold)":"var(--bad)";m.style.display="block";setTimeout(()=>m.style.display="none",2600)}
+async function api(path,opt={}){
+  const r=await fetch("/admin/api"+path,{...opt,headers:{"Content-Type":"application/json","X-Admin-Token":TOKEN,...(opt.headers||{})}});
+  if(r.status===401){logout();throw new Error("Kalit noto‘g‘ri")}
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.detail||"Xatolik");
+  return d;
+}
+function login(){TOKEN=$("#tok").value.trim();sessionStorage.setItem("abu_admin",TOKEN);start()}
+function logout(){TOKEN="";sessionStorage.removeItem("abu_admin");$("#app").style.display="none";$("#login").style.display="block"}
+function start(){api("/users?limit=1").then(()=>{$("#login").style.display="none";$("#app").style.display="block";show("users")}).catch(e=>toast(e.message,false))}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));b.classList.add("on");show(b.dataset.tab)});
+const views={};
+views.users=async(q="")=>{
+  const d=await api("/users?limit=50&q="+encodeURIComponent(q));
+  $("#view").innerHTML=`<div class="card"><div class="row"><input id="q" placeholder="ABU ID, @username, ism yoki TG ID" value="${esc(q)}"><button class="act" onclick="views.users(\$('#q').value)">Qidirish</button><span class="muted">Jami: ${d.total}</span></div>
+  <table><tr><th>ABU ID</th><th>Ism</th><th>Daraja</th><th>Streak</th><th>Holat</th><th>Amallar</th></tr>
+  ${d.items.map(u=>`<tr><td>${esc(u.abu_id)}<div class="muted">${esc(u.tg_id)}</div></td><td>${esc(u.name)} <span class="muted">${u.username?"@"+esc(u.username):""}</span></td><td>${u.level} <span class="muted">(${u.xp} XP)</span></td><td>${u.streak}</td>
+  <td>${u.banned?'<span class="bad">Bloklangan</span>':'<span class="ok">Faol</span>'}</td>
+  <td><button class="act" onclick="ban(${u.id},${!u.banned})">${u.banned?"Blokdan chiqarish":"Bloklash"}</button>
+  <button class="act" onclick="adjust(${u.id})">Balans</button>
+  <button class="act" onclick="history_(${u.id})">Tarix</button></td></tr>`).join("")}</table></div><div id="detail"></div>`;
+};
+async function ban(id,b){try{await api(`/users/${id}/ban`,{method:"POST",body:JSON.stringify({banned:b})});toast("Saqlandi");views.users($("#q")?.value||"")}catch(e){toast(e.message,false)}}
+async function adjust(id){
+  const cur=prompt("Valyuta: abu_f yoki abu_ton");if(!cur)return;
+  const amt=prompt("Miqdor (manfiy bo‘lishi mumkin):");if(!amt)return;
+  const note=prompt("Izoh:","Admin tuzatishi")||"Admin tuzatishi";
+  try{const r=await api(`/users/${id}/adjust`,{method:"POST",body:JSON.stringify({currency:cur,amount:amt,note})});toast("Yangi balans: "+r.balance_after)}catch(e){toast(e.message,false)}
+}
+async function history_(id){
+  const d=await api(`/users/${id}/transactions`);
+  $("#detail").innerHTML=`<div class="card"><h3>Tranzaksiyalar</h3><table><tr><th>Vaqt</th><th>Valyuta</th><th>Summa</th><th>Tur</th><th>Izoh</th></tr>${d.items.map(t=>`<tr><td>${esc(t.at.slice(0,16))}</td><td>${esc(t.currency)}</td><td class="${t.amount[0]==="-"?"bad":"ok"}">${esc(t.amount)}</td><td>${esc(t.kind)}</td><td>${esc(t.note)}</td></tr>`).join("")}</table></div>`;
+}
+views.shop=async()=>{
+  const d=await api("/products");
+  $("#view").innerHTML=`<div class="card"><table><tr><th>SKU</th><th>Mahsulot</th><th>Narx</th><th>Qoldiq</th><th>Holat</th><th></th></tr>
+  ${d.items.map(p=>`<tr><td><code>${esc(p.sku)}</code></td><td>${esc(p.title)}<div class="muted">${esc(p.category)}</div></td><td>${esc(p.price)} ${esc(p.currency)}</td><td>${p.stock??"∞"}</td><td>${p.active?'<span class="ok">Faol</span>':'<span class="muted">O‘chiq</span>'}</td><td><button class="act" onclick="toggleP(${p.id})">${p.active?"O‘chirish":"Yoqish"}</button></td></tr>`).join("")}</table>
+  <p class="muted">Yangi mahsulot va Telegram sovg‘alari uchun bot buyruqlaridan foydalaning (/product_add, /product_meta, /gifts_sync).</p></div>`;
+};
+async function toggleP(id){try{await api(`/products/${id}/toggle`,{method:"POST"});toast("Saqlandi");views.shop()}catch(e){toast(e.message,false)}}
+views.promos=async()=>{
+  const d=await api("/promos");
+  $("#view").innerHTML=`<div class="card"><h3>Yangi promo-kod</h3><div class="row">
+  <input id="pc" placeholder="KOD"><select id="pcur"><option value="abu_f">ABU F</option><option value="abu_ton">ABU TON</option></select>
+  <input id="pa" placeholder="Miqdor" size="8"><input id="pl" placeholder="Limit (bo‘sh = cheksiz)" size="14"><input id="pd" placeholder="Muddat kun (bo‘sh = cheksiz)" size="16">
+  <button class="act" onclick="createPromo()">Yaratish</button></div></div>
+  <div class="card"><table><tr><th>Kod</th><th>Mukofot</th><th>Ishlatilgan</th><th>Holat</th><th></th></tr>
+  ${d.items.map(p=>`<tr><td><code>${esc(p.code)}</code></td><td>${esc(p.amount)} ${esc(p.currency)}</td><td>${p.used}/${p.max_uses??"∞"}</td><td>${p.active?'<span class="ok">Faol</span>':'<span class="muted">O‘chiq</span>'}</td><td>${p.active?`<button class="act" onclick="promoOff('${esc(p.code)}')">O‘chirish</button>`:""}</td></tr>`).join("")}</table></div>`;
+};
+async function createPromo(){
+  const body={code:$("#pc").value,currency:$("#pcur").value,amount:$("#pa").value,
+    max_uses:$("#pl").value?parseInt($("#pl").value):null,days:$("#pd").value?parseInt($("#pd").value):null};
+  try{await api("/promos",{method:"POST",body:JSON.stringify(body)});toast("Yaratildi");views.promos()}catch(e){toast(e.message,false)}
+}
+async function promoOff(c){try{await api(`/promos/${encodeURIComponent(c)}/off`,{method:"POST"});toast("O‘chirildi");views.promos()}catch(e){toast(e.message,false)}}
+views.tasks=async()=>{
+  const d=await api("/tasks");
+  $("#view").innerHTML=`<div class="card"><table><tr><th>SKU</th><th>Vazifa</th><th>Tur</th><th>Mukofot</th><th>XP</th><th>Holat</th></tr>
+  ${d.items.map(t=>`<tr><td><code>${esc(t.sku)}</code></td><td>${esc(t.title)}</td><td>${esc(t.kind)}</td><td>${esc(t.reward)} ${esc(t.currency)}</td><td>${t.xp}</td><td>${t.active?'<span class="ok">Faol</span>':'<span class="muted">O‘chiq</span>'}</td></tr>`).join("")}</table>
+  <p class="muted">Yangi vazifa qo‘shish: bot buyrug‘i /task_add.</p></div>`;
+};
+views.emoji=async()=>{
+  const d=await api("/emoji");
+  $("#view").innerHTML=`<div class="card"><h3>Emoji → Custom Emoji</h3><div class="row">
+  <input id="ec" placeholder="Emoji (masalan ❤️)" size="10"><input id="eid" placeholder="Custom Emoji ID" size="26">
+  <button class="act" onclick="emojiSet()">Saqlash</button></div>
+  <table><tr><th>Emoji</th><th>Custom ID</th><th>Kategoriya</th><th></th></tr>
+  ${d.items.map(e=>`<tr><td>${esc(e.emoji)}</td><td><code>${esc(e.custom_emoji_id)}</code></td><td>${esc(e.category)}</td><td><button class="act danger" onclick="emojiDel('${esc(e.emoji)}')">O‘chirish</button></td></tr>`).join("")}</table>
+  <p class="muted">Custom Emoji ID Telegram'da tekshiriladi. Bot orqali ham: /emoji_set.</p></div>`;
+};
+async function emojiSet(){try{await api("/emoji",{method:"POST",body:JSON.stringify({emoji:$("#ec").value,custom_emoji_id:$("#eid").value.trim()})});toast("Saqlandi");views.emoji()}catch(e){toast(e.message,false)}}
+async function emojiDel(c){try{await api("/emoji/"+encodeURIComponent(c),{method:"DELETE"});toast("O‘chirildi");views.emoji()}catch(e){toast(e.message,false)}}
+views.audit=async()=>{
+  const d=await api("/audit?limit=200");
+  $("#view").innerHTML=`<div class="card"><table><tr><th>Vaqt</th><th>Amal</th><th>Ob’ekt</th><th>Tafsilot</th></tr>
+  ${d.items.map(a=>`<tr><td>${esc(a.at.slice(0,16).replace("T"," "))}</td><td>${esc(a.action)}</td><td>${esc(a.target)}</td><td class="muted">${esc(JSON.stringify(a.details))}</td></tr>`).join("")}</table></div>`;
+};
+function show(tab){(views[tab]||views.users)().catch(e=>toast(e.message,false))}
+if(TOKEN){start()}else{$("#login").style.display="block"}
+</script></body></html>

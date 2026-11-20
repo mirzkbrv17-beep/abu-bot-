@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ABU BOT</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+<main class="wrap">
+  <section class="banners" id="banners" aria-label="Bannerlar"></section>
+
+  <header class="profile glass">
+    <div class="avatar" id="avatar">A</div>
+    <div class="who">
+      <div class="name" id="name">—</div>
+      <div class="abuid" id="abuid">ABU ID: —</div>
+    </div>
+    <span class="chip" id="vip">VIP yo‘q</span>
+  </header>
+
+  <section class="balances">
+    <article class="coin-card glass" data-cur="abu_f">
+      <div class="gem gem-coin" aria-hidden="true">
+        <svg viewBox="0 0 120 120"><use href="#coin"/></svg>
+      </div>
+      <div class="label">ABU F</div>
+      <div class="amount" id="bal-abu_f">0</div>
+    </article>
+    <article class="coin-card glass" data-cur="abu_ton">
+      <div class="gem gem-diamond" aria-hidden="true">
+        <svg viewBox="0 0 120 120"><use href="#diamond"/></svg>
+      </div>
+      <div class="label">ABU TON</div>
+      <div class="amount" id="bal-abu_ton">0</div>
+    </article>
+  </section>
+
+  <section class="glass level">
+    <div class="row"><span>Daraja <b id="level">1</b></span><span id="xp">0 XP</span></div>
+    <div class="bar"><i id="xpbar"></i></div>
+    <div class="row muted"><span>🔥 Streak <b id="streak">0</b> kun</span><span>👥 Takliflar <b id="refs">0</b></span></div>
+  </section>
+
+  <section class="glass">
+    <h3>So‘nggi amallar</h3>
+    <ul class="list" id="tx"></ul>
+  </section>
+
+  <section class="glass">
+    <h3>Buyurtmalar</h3>
+    <ul class="list" id="orders"></ul>
+  </section>
+
+  <section class="glass">
+    <h3>Kolleksiya</h3>
+    <ul class="list" id="collection"></ul>
+  </section>
+</main>
+
+<!-- 3D ABU F tanga va ABU TON olmos: SVG gradientlar, boshqa rasm kerak emas -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="goldFace" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#f5c85c"/>
+      <stop offset=".7" stop-color="#b8860b"/><stop offset="1" stop-color="#6b4a06"/>
+    </radialGradient>
+    <linearGradient id="goldEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe9a0"/><stop offset=".5" stop-color="#9c6b10"/><stop offset="1" stop-color="#fff0b8"/>
+    </linearGradient>
+    <linearGradient id="facetA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#7fd8ff" stop-opacity=".2"/>
+    </linearGradient>
+    <linearGradient id="facetB" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ab8ff" stop-opacity=".9"/><stop offset="1" stop-color="#1b3a9e" stop-opacity=".85"/>
+    </linearGradient>
+    <linearGradient id="facetC" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#a6f0ff" stop-opacity=".9"/><stop offset="1" stop-color="#2b6ad6" stop-opacity=".7"/>
+    </linearGradient>
+  </defs>
+  <symbol id="coin" viewBox="0 0 120 120">
+    <circle cx="60" cy="60" r="56" fill="url(#goldEdge)"/>
+    <circle cx="60" cy="60" r="49" fill="url(#goldFace)"/>
+    <circle cx="60" cy="60" r="41" fill="none" stroke="#8a5f0c" stroke-width="2" opacity=".6"/>
+    <text x="60" y="68" text-anchor="middle" font-family="Georgia,serif" font-size="30" font-weight="700" fill="#5a3d05">ABU</text>
+    <text x="60" y="88" text-anchor="middle" font-family="Georgia,serif" font-size="14" fill="#5a3d05">F</text>
+    <ellipse cx="42" cy="30" rx="18" ry="8" fill="#fff" opacity=".35" transform="rotate(-25 42 30)"/>
+  </symbol>
+  <symbol id="diamond" viewBox="0 0 120 120">
+    <polygon points="60,8 100,44 60,112 20,44" fill="url(#facetB)"/>
+    <polygon points="60,8 38,44 60,112 20,44" fill="url(#facetA)" opacity=".85"/>
+    <polygon points="60,8 82,44 60,112 100,44" fill="url(#facetC)" opacity=".8"/>
+    <polygon points="20,44 100,44 60,8" fill="#dff6ff" opacity=".55"/>
+    <polygon points="38,44 60,112 82,44" fill="none" stroke="#e8fbff" stroke-width="1" opacity=".6"/>
+    <text x="60" y="78" text-anchor="middle" font-family="Georgia,serif" font-size="12" font-weight="700" fill="#0b2a6b" opacity=".85">TON</text>
+  </symbol>
+</svg>
+<script src="/static/app.js"></script>
+</body>
+</html>
